@@ -26,6 +26,7 @@ var classpath =
     [wala_root + "/com.ibm.wala.core/bin",
      wala_root + "/com.ibm.wala.shrike/bin",
      wala_root + "/com.ibm.wala.util/bin",
+     wala_root + "/com.ibm.wala.ide/bin",
      wala_root + "/com.ibm.wala.cast.js/bin",
      wala_root + "/com.ibm.wala.cast.js.rhino/bin",
      wala_root + "/com.ibm.wala.cast.js.rhino/lib/js.jar",
