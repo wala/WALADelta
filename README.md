@@ -60,7 +60,7 @@ To use these predicates, first save the `wala_paths-example.js` file as `wala_pa
 
 Then invoke them like this:
 
-> node minimise.js file-to-reduce.js analysis_timeout.js
+> node minimise.js file-to-reduce.js ./analysis_timeout.js
 
 License
 -------
