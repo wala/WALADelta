@@ -16,38 +16,112 @@ var fs = require("fs"),
     config = require(__dirname + "/config.js"),
     combinators = require(__dirname + "/combinators.js"),
     exec = require("child_process").exec,
-    optimist = require("optimist"),
     If = combinators.If,
     Foreach = combinators.Foreach;
 
-var argv = optimist.demand(1)
-                   .boolean('quick').alias('q', 'quick')
-                   .string('cmd')
-                   .string('errmsg')
-                   .usage('Usage: $0 [-q|--quick] [--cmd COMMAND] [--timeout TIMEOUT] [--errmsg ERRMSG] FILE [PREDICATE] OPTIONS...')
-                   .argv;
+function usage() {
+    console.error("Usage: " + process.argv[0] + " " + process.argv[1] +
+		  " [-q|--quick] [--cmd COMMAND] [--timeout TIMEOUT]" +
+		  " [--errmsg ERRMSG] FILE [PREDICATE] OPTIONS...");
+    process.exit(-1);
+}
 
-var quick = argv.quick,
-    file = argv._[0],
-    predicate = argv._.length > 1 ? require(argv._[1]) : {},
-    predicate_args = argv._.slice(2);
+function log_debug(msg) {
+    // console.log(msg);
+}
 
-var ast = jsp.parse(fs.readFileSync(file, 'utf-8'));
+// check whether the given file exists
+// TODO: this is a bit rough; surely someone has written a module to do this?
+function exists(f) {
+    try {
+	fs.statSync(f);
+	return true;
+    } catch(e) {
+	return false;
+    }
+}
 
+var /** only knock out entire statements */
+    quick = false,
+
+    /** command to invoke to determine success/failure */
+    cmd = null,
+
+    /** error message indicating failure of command */
+    errmsg = null,
+
+    /** time budget to allow for the command to run */
+    timeout = null,
+
+    /** file to minimise */
+    file = null,
+
+    /** predicate to use for minimisation */
+    predicate = {},
+
+    /** arguments to pass to the predicate */
+    predicate_args = [];
+
+// command line option parsing; manual for now
+// TODO: find good npm package to use
+for(var i=2;i<process.argv.length;++i) {
+    var arg = process.argv[i];
+    if(arg === '--quick' || arg === '-q') {
+	quick = true;
+    } else if(arg === '--cmd') {
+	if(cmd === null)
+	    cmd = String(process.argv[++i]);
+	else
+	    console.warn("More than one command specified; ignoring.");
+    } else if(arg === '--timeout') {
+	if(timeout === null)
+	    timeout = Number(process.argv[++i]);
+	else
+	    console.warn("More than one timeout specified; ignoring.");
+    } else if(arg === '--errmsg') {
+	if(errmsg === null)
+	    errmsg = String(process.argv[++i]);
+	else
+	    console.warn("More than one error message specified; ignoring.");
+    } else if(arg === '--') {
+	file = process.argv[i+1];
+	i += 2;
+	break;
+    } else if(arg[0] === '-') {
+	usage();
+    } else {
+	file = process.argv[i++];
+	break;
+    }
+}
+
+// check that we have something to minimise
+if(!file)
+    usage();
+
+// check whether a predicate module was specified
+if(i < process.argv.length)
+    predicate = require(process.argv[i++]);
+
+// the remaining arguments will be passed to the predicate
+predicate_args = process.argv.slice(i);
+
+// initialise predicate module
 if(typeof predicate.init === 'function')
     predicate.init(predicate_args);
 
+// if no predicate module was specified, synthesise one from the other options
 if(!predicate.test) {
-    predicate.cmd = predicate.cmd || argv.cmd;
+    predicate.cmd = predicate.cmd || cmd;
     if(!predicate.cmd) {
 	console.error("No test command specified.");
 	process.exit(-1);
     }
 
     if(typeof predicate.checkResult !== 'function') {
-	if(argv.errmsg) {
+	if(errmsg) {
 	    predicate.checkResult = function(error, stdout, stderr, time) {
-		if(stderr && stderr.indexOf(argv.errmsg) !== -1) {
+		if(stderr && stderr.indexOf(errmsg) !== -1) {
 		    console.log("    aborted with relevant error");
 		    return true;
 		} else if(error) {
@@ -58,10 +132,10 @@ if(!predicate.test) {
 		    return false;
 		}
 	    };
-	} else if(argv.timeout) {
+	} else if(timeout) {
 	    predicate.checkResult = function(error, stdout, stderr, time) {
-		if(error && error.signal === 'SIGTERM') {
-		    console.log("    killed by SIGTERM");
+		if(error && error.signal === 'SIGKILL') {
+		    console.log("    killed by SIGKILL");
 		    return true;
 		} else if(error) {
 		    console.log("    aborted with other error");
@@ -84,12 +158,13 @@ if(!predicate.test) {
 	}
     }
 
-    predicate.timeout = predicate.timeout || argv.timeout;
+    predicate.timeout = predicate.timeout || timeout;
     predicate.test = function(fn, k) {
 	var stats = fs.statSync(fn);
 	console.log("Testing candidate " + fn + " (" + stats.size + " bytes)");
 	var start = new Date();
-	var options = { maxBuffer : 4*1024*1024	};
+	var options = { maxBuffer : 4*1024*1024,
+		        killSignal: 'SIGKILL' };
 	if(predicate.timeout)
 	    options.timeout = predicate.timeout;
 	exec(predicate.cmd + " " + fn, options, 
@@ -102,38 +177,28 @@ if(!predicate.test) {
     };
 }
 
-function log_debug(msg) {
-    // console.log(msg);
-}
-
-// check whether the given file exists
-// TODO: this is a bit rough; surely someone has written a module to do this?
-function exists(f) {
-    try {
-	fs.statSync(f);
-	return true;
-    } catch(e) {
-	return false;
-    }
-}
+// parse given file
+var ast = jsp.parse(fs.readFileSync(file, 'utf-8'));
 
 // determine a suitable temporary directory
 var tmp_dir;
-for(var i=0;
-    exists(tmp_dir=config.tmp_dir+"/tmp"+i);
-    ++i);
-fs.mkdirSync(tmp_dir);
+for(i=0; exists(tmp_dir=config.tmp_dir+"/tmp"+i); ++i);
+    fs.mkdirSync(tmp_dir);
 
 // keep track of the number of attempts so far
 var round = 0;
+
 // the smallest test case so far is kept here
 var smallest = tmp_dir + "/minimise_js_smallest.js";
+
+// get name of current test case
 function getTempFileName() {
     var fn = tmp_dir + "/minimise_js_" + round + ".js";
     ++round;
     return fn;
 }
 
+// little helper function to deal with Uglify ASTs
 function typeOf(nd) {
     if(nd && typeof nd === 'object' && typeof nd[0] === 'string')
 	return nd[0];
@@ -230,6 +295,7 @@ function minimise_array(array, k, nonempty, twolevel) {
     }
 }
 
+// the main minimisation function
 function minimise(nd, parent, idx, k) {
     log_debug("minimising " + util.inspect(nd));
     if(!k)
@@ -341,6 +407,7 @@ function minimise(nd, parent, idx, k) {
     }
 }
 
+// write the current test case out to disk
 function writeTempFile() {
     var pp = pro.gen_code(ast, { beautify: true });
     var fn = getTempFileName();
@@ -348,6 +415,7 @@ function writeTempFile() {
     return fn;
 }
 
+// test the current test case
 function test(k) {
     if(!k)
 	throw new TypeError("no continuation");
@@ -417,6 +485,3 @@ function Replace(nd, idx) {
 	}
     };
 }
-
-// other things to implement:
-//  - replace f(e) by either f or e

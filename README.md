@@ -11,9 +11,8 @@ Prerequisites
 --------------
 - Node.js
 - UglifyJS (install via npm)
-- Optimist (install via npm)
 
-We've tested WALA Delta on Linux and Mac OS X.  
+We've tested WALA Delta on Linux and Mac OS X.
 
 Usage
 -----
@@ -58,7 +57,9 @@ Several predicates are provided for use with WALA's call-graph builder for JavaS
 
 To use these predicates, first save the `wala_paths-example.js` file as `wala_paths.js` and edit the paths appropriately to point to the root directory of your WALA workspace and the plugins directory of your Eclipse installation.
 
-Then invoke them like this:
+Variable `classpath` in `wala_runner.js` specifies which JARs to put into the classpath when invoking WALA. It uses the paths specified in `wala_paths.js` and should work out of the box with Eclipse 3.6. For other versions, you'll most likely have to adjust the names of the `org.eclipse.equinox.common`, `org.eclipse.core.runtime`, and `org.eclipse.osgi` JARs.
+
+Once you are done, the WALA predicates can be invoked like this:
 
 > node minimise.js file-to-reduce.js ./analysis_timeout.js
 
