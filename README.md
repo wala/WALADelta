@@ -10,7 +10,7 @@ While it is distributed as part of WALA, WALA Delta can be used with any JavaScr
 Prerequisites
 --------------
 - Node.js
-- UglifyJS (install via npm)
+- UglifyJS (install by running `npm install uglify-js` in your home directory)
 
 We've tested WALA Delta on Linux and Mac OS X.
 
