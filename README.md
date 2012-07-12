@@ -1,11 +1,11 @@
 WALA Delta
 ==========
 
-WALA Delta is a [delta debugger](http://www.st.cs.uni-saarland.de/dd/) for JavaScript. Given a JavaScript program `test.js` and a predicate `P` such that `P` holds for `test.js`, it shrinks `test.js` by deleting statements, functions and sub-expressions, looking for a small sub-program of `test.js` on which `P` still holds. The predicate `P` can itself be implemented in JavaScript, allowing for arbitrarily complex tests.
+WALA Delta is a [delta debugger](http://www.st.cs.uni-saarland.de/dd/) to help debug JavaScript-processing tools.  Given a JavaScript program `test.js` that is causing a JS-processing tool to crash or time out, it shrinks `test.js` by deleting statements, functions and sub-expressions, looking for a small sub-program of `test.js` which still cause the crash or timeout.  In general, WALA Delta can search for a small input satifying some predicate `P` implemented in JavaScript, allowing for arbitrarily complex tests.
 
 For example, `P` could invoke the WALA pointer analysis on its input program and check whether it times out. If `test.js` is very big, it may be hard to see what is causing the timeout. WALA Delta will find a (sometimes very much) smaller program on which the analysis still times out, making it easier to diagnose the root cause of the scalability problem.
 
-While it is distributed as part of WALA, WALA Delta can be used with any JavaScript-processing tool. All you need to use it is [node.js](http://nodejs.org/) and a number of modules that can be installed through [npm](http://npmjs.org/) (which comes installed with node.js).
+While it is distributed as part of WALA, WALA Delta can be used with any JavaScript-processing tool; you do _not_ need to install [the core WALA libraries](https://github.com/wala/WALA) to use it. All you need to use it is [node.js](http://nodejs.org/) and a number of modules that can be installed through [npm](http://npmjs.org/) (which comes installed with node.js).
 
 Prerequisites
 --------------
@@ -34,13 +34,17 @@ A slightly more convenient (but less general) way of writing a predicate is to i
 
 Finally, you can specify the predicate implicitly through command line arguments: invoking WALA Delta with arguments
 
-> --cmd CMD --timeout N
+> --cmd CMD --timeout N file-to-reduce.js
 
-has the same effect as defining a predicate module exporting `CMD` as its command, and with a `checkResult` function that returns `true` if the command took longer than `N` milliseconds to complete.
+has the same effect as defining a predicate module exporting `CMD` as its command, and with a `checkResult` function that returns `true` if the command took longer than `N` milliseconds to complete.  Note that if your tool requires other command-line arguments besides the input JavaScript file, you should write a wrapper shell script that takes one argument (the input JS file) and invokes your tool appropriately, and then use that shell script as the `--cmd` argument.
+
+As an example, if you'd like to see why `file-to-reduce.js` is taking longer than 30 seconds to analyze with your tool `myjstool`, you would run:
+
+> node minimise.js --cmd myjstool --timeout 30 file-to-reduce.js
 
 Invoking WALA Delta with arguments
 
-> --cmd CMD --errmsg ERR
+> --cmd CMD --errmsg ERR file-to-reduce.js
 
 again takes `CMD` to be the command to execute; the predicate is deemed to hold if the command outputs an error message containing string `ERR`.
 
