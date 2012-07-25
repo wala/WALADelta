@@ -40,7 +40,7 @@ has the same effect as defining a predicate module exporting `CMD` as its comman
 
 As an example, if you'd like to see why `file-to-reduce.js` is taking longer than 30 seconds to analyze with your tool `myjstool`, you would run:
 
-> node minimise.js --cmd myjstool --timeout 30 file-to-reduce.js
+> node minimise.js --cmd myjstool --timeout 30000 file-to-reduce.js
 
 Invoking WALA Delta with arguments
 
