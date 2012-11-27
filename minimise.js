@@ -317,6 +317,9 @@ function minimise(nd, parent, idx, k) {
 	Then(MinimiseArray(nd, 3)).
 	Then(If(function() { return !quick && nd[3].length === 1 && nd[3][0][0] === 'block'; },
 	        function(k) { Replace(nd, 3).With(nd[3][0][1])(k); }))(k);
+    } else if (ndtp === "object") {
+        // minimise object literals even in quick mode
+        MinimiseArray(nd, 1, false, true)(k);	    
     } else {
 	// match other node types only if we're not doing quick minimisation
 	// if quick is set, !quick && ndtp will be undefined, so the
@@ -354,9 +357,6 @@ function minimise(nd, parent, idx, k) {
 	case "array":
 	    MinimiseArray(nd, 1)(k);
 	    break;
-	case "object":
-            MinimiseArray(nd, 1, false, true)(k);	    
-	    break;	
 	case "if":
 	case "conditional":
 	    Replace(parent, idx).With(nd[2]).
