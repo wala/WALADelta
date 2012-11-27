@@ -7,6 +7,8 @@ For example, `P` could invoke the WALA pointer analysis on its input program and
 
 While it is distributed as part of WALA, WALA Delta can be used with any JavaScript-processing tool; you do _not_ need to install [the core WALA libraries](https://github.com/wala/WALA) to use it. All you need to use it is [node.js](http://nodejs.org/) and a number of modules that can be installed through [npm](http://npmjs.org/) (which comes installed with node.js).
 
+Also, note that since JSON is legal JavaScript, WALA Delta can also be used to help debug programs taking JSON as input (by shrinking the input JSON causing the error).
+
 Prerequisites
 --------------
 - Node.js
