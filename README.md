@@ -48,7 +48,7 @@ Invoking WALA Delta with arguments
 
 again takes `CMD` to be the command to execute; the predicate is deemed to hold if the command outputs an error message containing string `ERR`.
 
-Finally, you can just specify a command (without error message or timeout), in which case WALA Delta simply checks whether the command aborted with an error.
+Finally, you can just specify a command (without error message or timeout), in which case the predicate is deemed to hold if the command exits with an error.
 
 Predicates for WALA JavaScript Analysis
 ---------------------------------------
