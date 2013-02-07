@@ -12,7 +12,7 @@ Also, note that since JSON is legal JavaScript, WALA Delta can also be used to h
 Prerequisites
 --------------
 - Node.js
-- UglifyJS (install by running `npm install uglify-js` in your home directory)
+- UglifyJS.  __NOTE__: WALA Delta does not work with [UglifyJS2](https://github.com/mishoo/UglifyJS2).  To get an appropriate version of UglifyJS, run `npm install uglify-js@1.3.4` in your home directory.
 
 We've tested WALA Delta on Linux and Mac OS X.
 
