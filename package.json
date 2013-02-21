@@ -1,0 +1,10 @@
+{
+    "name": "WALADelta",
+    "version": "0.1.0",
+    "author": "Max Schaefer <schaefer@ntu.edu.sg>",
+    "description": "delta debugger for JavaScript",
+    "dependencies" : {
+	"uglify-js": "1.3.4"
+    },
+    "license": "Eclipse"
+}
