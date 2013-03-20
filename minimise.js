@@ -177,8 +177,17 @@ if(!predicate.test) {
     };
 }
 
+// figure out file extension; default is 'js'
+var ext = (file.match(/\.(\w+)$/) || [, 'js'])[1];
+
+var src = fs.readFileSync(file, 'utf-8');
+
+// hack to make JSON work
+if(ext === 'json')
+    src = '(' + src + ')';
+
 // parse given file
-var ast = jsp.parse(fs.readFileSync(file, 'utf-8'));
+var ast = jsp.parse(src);
 
 // determine a suitable temporary directory
 var tmp_dir;
@@ -189,11 +198,11 @@ for(i=0; exists(tmp_dir=config.tmp_dir+"/tmp"+i); ++i);
 var round = 0;
 
 // the smallest test case so far is kept here
-var smallest = tmp_dir + "/minimise_js_smallest.js";
+var smallest = tmp_dir + "/minimise_js_smallest." + ext;
 
 // get name of current test case
 function getTempFileName() {
-    var fn = tmp_dir + "/minimise_js_" + round + ".js";
+    var fn = tmp_dir + "/minimise_js_" + round + "." + ext;
     ++round;
     return fn;
 }
@@ -410,6 +419,8 @@ function minimise(nd, parent, idx, k) {
 // write the current test case out to disk
 function writeTempFile() {
     var pp = pro.gen_code(ast, { beautify: true });
+    if(ext === 'json')
+	pp = pp.substring(1, pp.length-2);
     var fn = getTempFileName();
     fs.writeFileSync(fn, pp);
     return fn;
