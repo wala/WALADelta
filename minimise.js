@@ -416,11 +416,52 @@ function minimise(nd, parent, idx, k) {
     }
 }
 
+// UglifyJS's code generator does not produce valid JSON;
+// this function converts an UglifyJS into a plain object (where possible),
+// which can then be printed using JSON.stringify
+function toJSON(obj) {
+    var ndtp = typeOf(obj);
+    switch(ndtp) {
+    case 'toplevel':
+	// not quite right, but better than nothing
+	if(obj[1].length === 0)
+	    return null;
+	return toJSON(obj[1][0]);
+    case 'stat':
+	debugger;
+	return toJSON(obj[1]);
+    case 'object':
+	var res = {};
+	obj[1].forEach(function(prop) {
+	    res[prop[0]] = toJSON(prop[1]);
+	});
+	return res;
+    case 'array':
+	return obj[1].map(toJSON);
+    case 'num':
+    case 'string':
+	return obj[1];
+    case 'name':
+	switch(obj[1]) {
+	case 'true':
+	    return true;
+	case 'false':
+	    return false;
+	case 'null':
+	    return null;
+	default:
+	    throw new Error("unexpected AST node type " + ndtp);
+	}
+    default:
+	debugger;
+	throw new Error("unexpected AST node type " + ndtp);
+    }
+}
+
 // write the current test case out to disk
 function writeTempFile() {
-    var pp = pro.gen_code(ast, { beautify: true });
-    if(ext === 'json')
-	pp = pp.substring(1, pp.length-2);
+    var pp = ext === 'json' ? JSON.stringify(toJSON(ast))
+                            : pro.gen_code(ast, { beautify: true });
     var fn = getTempFileName();
     fs.writeFileSync(fn, pp);
     return fn;
@@ -434,7 +475,8 @@ function test(k) {
     predicate.test(fn, function(succ) {
 	// if the test succeeded, save it to file 'smallest'
 	if(succ)
-	    fs.writeFileSync(smallest, pro.gen_code(ast, { beautify: true }));
+	    fs.writeFileSync(smallest, ext === 'json' ? JSON.stringify(toJSON(ast))
+                                                      : pro.gen_code(ast, { beautify: true }));
 	k(succ);
     });
 }
