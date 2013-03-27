@@ -428,7 +428,6 @@ function toJSON(obj) {
 	    return null;
 	return toJSON(obj[1][0]);
     case 'stat':
-	debugger;
 	return toJSON(obj[1]);
     case 'object':
 	var res = {};
@@ -452,18 +451,33 @@ function toJSON(obj) {
 	default:
 	    throw new Error("unexpected AST node type " + ndtp);
 	}
+    case 'unary-prefix':
+	// special case: negative integer literals are represented as unary prefix by Uglify
+	if(obj[1] === '-' && typeOf(obj[2]) === 'num')
+	    return -obj[2][1];
     default:
 	debugger;
 	throw new Error("unexpected AST node type " + ndtp);
     }
 }
 
+function pp(ast) {
+    if(ext === 'json') {
+	try {
+	    return JSON.stringify(toJSON(ast));
+	} catch(e) {
+	    console.error("Unable to convert to JSON: " + pro.gen_code(ast, { beautify: true }));
+	    throw e;
+	}
+    } else {
+	return pro.gen_code(ast, { beautify: true });
+    }
+}
+
 // write the current test case out to disk
 function writeTempFile() {
-    var pp = ext === 'json' ? JSON.stringify(toJSON(ast))
-                            : pro.gen_code(ast, { beautify: true });
     var fn = getTempFileName();
-    fs.writeFileSync(fn, pp);
+    fs.writeFileSync(fn, pp(ast));
     return fn;
 }
 
@@ -475,8 +489,7 @@ function test(k) {
     predicate.test(fn, function(succ) {
 	// if the test succeeded, save it to file 'smallest'
 	if(succ)
-	    fs.writeFileSync(smallest, ext === 'json' ? JSON.stringify(toJSON(ast))
-                                                      : pro.gen_code(ast, { beautify: true }));
+	    fs.writeFileSync(smallest, pp(ast));
 	k(succ);
     });
 }
