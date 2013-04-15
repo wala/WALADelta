@@ -337,7 +337,9 @@ function minimise(nd, parent, idx, k) {
 	case "string":
 	case "num":
 	case "regexp":
-	    // try replacing with '0' or the empty string
+	    // disable replacing constants.  unclear it helps
+            // minimization much, and can mess up semantics when
+            // minimizing JSON
 	    // Replace(parent, idx).With(["num", 0]).
 	    // OrElse(Replace(parent, idx).With(["string", ""]))(k);
             k();
