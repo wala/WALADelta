@@ -29,7 +29,7 @@ var classpath =
      wala_root + "/com.ibm.wala.ide/bin",
      wala_root + "/com.ibm.wala.cast.js/bin",
      wala_root + "/com.ibm.wala.cast.js.rhino/bin",
-     wala_root + "/com.ibm.wala.cast.js.rhino/lib/js.jar",
+     wala_root + "/com.ibm.wala.cast.js.rhino/lib/rhino-1.7R3.jar",
      wala_root + "/com.ibm.wala.cast.js.test/bin",
      wala_root + "/com.ibm.wala.cast.js.rhino.test/bin",
      wala_root + "/com.ibm.wala.cast.js/lib/jericho-html-3.2.jar",
