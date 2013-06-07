@@ -198,11 +198,11 @@ for(i=0; exists(tmp_dir=config.tmp_dir+"/tmp"+i); ++i);
 var round = 0;
 
 // the smallest test case so far is kept here
-var smallest = tmp_dir + "/minimise_js_smallest." + ext;
+var smallest = tmp_dir + "/delta_js_smallest." + ext;
 
 // get name of current test case
 function getTempFileName() {
-    var fn = tmp_dir + "/minimise_js_" + round + "." + ext;
+    var fn = tmp_dir + "/delta_js_" + round + "." + ext;
     ++round;
     return fn;
 }

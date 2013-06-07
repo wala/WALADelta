@@ -19,9 +19,9 @@ We've tested WALA Delta on Linux and Mac OS X.
 Usage
 -----
 
-WALA Delta takes as its input a JavaScript file `f.js` and a predicate `P`. It first copies `f.js` to `<tmp>/minimise_js_0.js`, where `<tmp>` is a fresh directory created under the `tmp_dir` specified in `config.js` (`/tmp` by default).
+WALA Delta takes as its input a JavaScript file `f.js` and a predicate `P`. It first copies `f.js` to `<tmp>/delta_js_0.js`, where `<tmp>` is a fresh directory created under the `tmp_dir` specified in `config.js` (`/tmp` by default).
 
-It then evaluates `P` on `<tmp>/minimise_js_0.js`. If `P` does not hold for this file, it aborts with an error. Otherwise, it reduces the input file by removing a number of statements or expressions, writing the result to `<tmp>/minimise_js_1.js`, and evaluating `P` on this new file. While `P` holds, it keeps reducing the input file in this way until it has found a reduced version `<tmp>/minimise_js_n.js` such that `P` holds on it, but not on any further reduced version. At this point, WALA Delta stops and copies the smallest reduced version to `<tmp>/minimise_js_smallest.js`.
+It then evaluates `P` on `<tmp>/delta_js_0.js`. If `P` does not hold for this file, it aborts with an error. Otherwise, it reduces the input file by removing a number of statements or expressions, writing the result to `<tmp>/delta_js_1.js`, and evaluating `P` on this new file. While `P` holds, it keeps reducing the input file in this way until it has found a reduced version `<tmp>/delta_js_n.js` such that `P` holds on it, but not on any further reduced version. At this point, WALA Delta stops and copies the smallest reduced version to `<tmp>/delta_js_smallest.js`.
 
 There are several ways for providing a predicate `P`.
 
@@ -42,7 +42,7 @@ has the same effect as defining a predicate module exporting `CMD` as its comman
 
 As an example, if you'd like to see why `file-to-reduce.js` is taking longer than 30 seconds to analyze with your tool `myjstool`, you would run:
 
-> node minimise.js --cmd myjstool --timeout 30000 file-to-reduce.js
+> node delta.js --cmd myjstool --timeout 30000 file-to-reduce.js
 
 Invoking WALA Delta with arguments
 
@@ -67,7 +67,7 @@ Variable `classpath` in `wala_runner.js` specifies which JARs to put into the cl
 
 Once you are done, the WALA predicates can be invoked like this:
 
-> node minimise.js file-to-reduce.js ./analysis_timeout.js
+> node delta.js file-to-reduce.js ./analysis_timeout.js
 
 License
 -------
