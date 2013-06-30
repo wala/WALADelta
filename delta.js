@@ -329,6 +329,11 @@ function minimise(nd, parent, idx, k) {
     } else if (ndtp === "object") {
         // minimise object literals even in quick mode
         MinimiseArray(nd, 1, false, true)(k);	    
+    } else if(ndtp === "var") {
+	// minimise variable declarations even in quick mode, to avoid
+	// interpreting variable names in the declarations as object types
+	// upon recursing
+	MinimiseArray(nd, 1, true, true)(k);
     } else {
 	// match other node types only if we're not doing quick minimisation
 	// if quick is set, !quick && ndtp will be undefined, so the
