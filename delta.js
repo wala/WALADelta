@@ -21,6 +21,7 @@ var fs = require("fs"),
 function usage() {
     console.error("Usage: " + process.argv[0] + " " + process.argv[1] +
 		  " [-q|--quick] [--cmd COMMAND]" +
+		  " [--record FILE | --replay FILE]" +
 		  " [--errmsg ERRMSG] FILE [PREDICATE] OPTIONS...");
     process.exit(-1);
 }
@@ -49,9 +50,6 @@ var /** only knock out entire statements */
     /** error message indicating failure of command */
     errmsg = null,
 
-    /** time budget to allow for the command to run */
-    timeout = null,
-
     /** file to minimise */
     file = null,
 
@@ -59,7 +57,13 @@ var /** only knock out entire statements */
     predicate = {},
 
     /** arguments to pass to the predicate */
-    predicate_args = [];
+    predicate_args = [],
+
+    /** file to record predicate results to */
+    record = null,
+
+    /** array to read predicate results from */
+    replay = null, replay_idx = -1;
 
 // command line option parsing; manual for now
 // TODO: find good npm package to use
@@ -79,6 +83,17 @@ for(var i=2;i<process.argv.length;++i) {
 	    errmsg = String(process.argv[++i]);
 	else
 	    console.warn("More than one error message specified; ignoring.");
+    } else if(arg === '--record') {
+	record = process.argv[++i];
+	if(fs.existsSync(record))
+	    fs.unlinkSync(record);
+    } else if(arg === '--replay') {
+	if(cmd) {
+	    console.warn("--replay after --cmd ignored");
+	} else {
+	    replay = fs.readFileSync(process.argv[++i], 'utf-8').split('\n');
+	    replay_idx = 0;
+	}
     } else if(arg === '--') {
 	file = process.argv[i+1];
 	i += 2;
@@ -109,52 +124,68 @@ if(typeof predicate.init === 'function')
 // if no predicate module was specified, synthesise one from the other options
 if(!predicate.test) {
     predicate.cmd = predicate.cmd || cmd;
-    if(!predicate.cmd) {
-	console.error("No test command specified.");
-	process.exit(-1);
-    }
 
-    if(typeof predicate.checkResult !== 'function') {
-	if(errmsg) {
-	    predicate.checkResult = function(error, stdout, stderr) {
-		if(stderr && stderr.indexOf(errmsg) !== -1) {
-		    console.log("    aborted with relevant error");
-		    return true;
-		} else if(error) {
-		    console.log("    aborted with other error");
-		    return false;
-		} else {
-		    console.log("    completed successfully");
-		    return false;
-		}
-	    };
-	} else {
-	    predicate.checkResult = function(error, stdout, stderr) {
-		if(error) {
-		    console.log("    aborted with error");
-		    return true;
-		} else {
-		    console.log("    completed successfully");
-		    return false;
-		}
-	    };
+    if(replay) {
+	predicate.test = function(fn) {
+	    var stats = fs.statSync(fn);
+	    console.log("Testing candidate " + fn + 
+			" (" + stats.size + " bytes)");
+	    var res = replay[replay_idx++] === 'true';
+	    if(res)
+		console.log("    aborted with relevant error (recorded)");
+	    else
+		console.log("    completed successfully (recorded)");
+	    return res;
+	};
+    } else {
+	if(!predicate.cmd) {
+	    console.error("No test command specified.");
+	    process.exit(-1);
 	}
-    }
-
-    predicate.test = function(fn) {
-	var stats = fs.statSync(fn);
-	console.log("Testing candidate " + fn + " (" + stats.size + " bytes)");
-	var start = new Date();
-	var stdout_file = fn + ".stdout",
+	
+	if(typeof predicate.checkResult !== 'function') {
+	    if(errmsg) {
+		predicate.checkResult = function(error, stdout, stderr) {
+		    if(stderr && stderr.indexOf(errmsg) !== -1) {
+			console.log("    aborted with relevant error");
+			return true;
+		    } else if(error) {
+			console.log("    aborted with other error");
+			return false;
+		    } else {
+			console.log("    completed successfully");
+			return false;
+		    }
+		};
+	    } else {
+		predicate.checkResult = function(error, stdout, stderr) {
+		    if(error) {
+			console.log("    aborted with error");
+			return true;
+		    } else {
+			console.log("    completed successfully");
+			return false;
+		    }
+		};
+	    }
+	}
+	
+	predicate.test = function(fn) {
+	    var stats = fs.statSync(fn);
+	    console.log("Testing candidate " + fn + 
+			" (" + stats.size + " bytes)");
+	    var start = new Date();
+	    var stdout_file = fn + ".stdout",
 	    stderr_file = fn + ".stderr";
-	var error = execSync.run(predicate.cmd + " '" + fn + "'" +
-				 " >'" + stdout_file + "'" +
-				 " 2>'" + stderr_file + "'");
-	var end = new Date();
-	var stdout = fs.readFileSync(stdout_file, "utf-8"),
+	    var error = execSync.run(predicate.cmd + " '" + fn + "'" +
+				     " >'" + stdout_file + "'" +
+				     " 2>'" + stderr_file + "'");
+	    var end = new Date();
+	    var stdout = fs.readFileSync(stdout_file, "utf-8"),
 	    stderr = fs.readFileSync(stderr_file, "utf-8");
-	return predicate.checkResult(error, stdout, stderr, end - start);
-    };
+	    return predicate.checkResult(error, stdout, stderr, end - start);
+	};
+    }
 }
 
 // figure out file extension; default is 'js'
@@ -360,7 +391,10 @@ function writeTempFile() {
 // test the current test case
 function test() {
     var fn = writeTempFile();
-    if(predicate.test(fn)) {
+    var res = predicate.test(fn);
+    if(record)
+	fs.appendFileSync(record, !!res + "\n");
+    if(res) {
 	// if the test succeeded, save it to file 'smallest'
 	fs.writeFileSync(smallest, pp(ast));
 	return true;
@@ -376,7 +410,10 @@ fs.writeFileSync(orig, input);
 fs.writeFileSync(smallest, input);
 
 // get started
-if(predicate.test(orig)) {
+var res = predicate.test(orig);
+if(record)
+    fs.appendFileSync(record, !!res + "\n");
+if(res) {
     minimise(ast, null, -1);
     console.log("Minimisation finished; "
 		+ "final version is in " + smallest);
