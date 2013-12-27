@@ -290,7 +290,7 @@ function minimise(nd, parent, idx) {
 		Replace(nd, 'name').With(null);
 	    minimise_array(nd.params);
 	}
-	minimise(nd, 'body');
+	minimise_array(nd.body.body);
 	break;
     case 'ObjectExpression':
 	minimise_array(nd.properties);
