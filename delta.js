@@ -232,7 +232,7 @@ function minimise_array(array, nonempty) {
 	// once we're done, switch to size sz/2; if size drops to zero,
 	// recursively invoke minimise on the individual elements
 	// of the array
-	for(var sz=array.length>>>2;sz>0;sz>>>=2) {
+	for(var sz=array.length>>>1;sz>0;sz>>>=1) {
 	    log_debug("  chunk size " + sz);
 	    var nchunks = Math.floor(array.length/sz);
 	    for(var i=nchunks-1;i>=0;--i) {
