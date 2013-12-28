@@ -9,5 +9,9 @@
 	"estraverse": "*",
 	"execSync": "*"
     },
-    "license": "Eclipse"
+    "license": "Eclipse",
+    "repository" : {
+      "type" : "git",
+      "url" : "https://github.com/wala/WALADelta.git"
+    }
 }
