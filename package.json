@@ -2,9 +2,9 @@
     "name": "WALADelta",
     "version": "0.1.0",
     "author": "Max Schaefer <schaefer@ntu.edu.sg>",
-    "description": "delta debugger for JavaScript",
+    "description": "delta debugger for WALA-based JavaScript analyses",
     "dependencies" : {
-	"uglify-js": "1.3.4"
+	"jsdelta": "0.1.0"
     },
     "license": "Eclipse"
 }
