@@ -3,6 +3,8 @@ WALA Delta
 
 WALA Delta is a [delta debugger](http://www.st.cs.uni-saarland.de/dd/) for [WALA](http://wala.sf.net)-based JavaScript analyses. It is based on the [JS Delta](http://github.com/wala/jsdelta) package, and provides additional support specifically for debugging analyses using the WALA libraries.
 
+*NOTE*: As of version 0.2.0, WALA Delta no longer includes generic delta debugging functionality, which has been factored out into the new JS Delta package. If you are using WALA Delta in a scenario independent of core WALA, you may consider using JS Delta instead.
+
 Installation
 ------------
 
